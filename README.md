@@ -56,3 +56,5 @@ This project is using code from:
 [nwojke/deep_sort](https://github.com/nwojke/deep_sort): Simple Online Realtime Tracking with a Deep Association Metric.
 
 [leggedrobotics/darknet_ros](https://github.com/leggedrobotics/darknet_ros): YOLO ROS: Real-Time Object Detection for ROS
+
+[AlexAB/darknet](https://github.com/AlexeyAB/darknet): YOLOv3 with modified darknet

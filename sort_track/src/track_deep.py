@@ -87,7 +87,7 @@ def main():
     nn_budget = 100
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
     tracker = Tracker(metric)
-    model_filename = "/home/ilyas/darknetros_sort/src/sort_track/src/deep_sort/model_data/mars-small128.pb" #Change it to your directory
+    model_filename = "/home/nvidia/catkin_ws/src/sort-deepsort-yolov3-ROS/sort_track/src/deep_sort/model_data" #Change it to your directory
     encoder = gdet.create_box_encoder(model_filename)
     #Initialize ROS node
     rospy.init_node('sort_tracker', anonymous=True)

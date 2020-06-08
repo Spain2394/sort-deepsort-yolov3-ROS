@@ -182,7 +182,7 @@ class Sort(object):
     self.trackers = []
     self.frame_count = 0
 
-  def update(self,dets):
+  def update(self,dets,iou_threshold=0.3):
     """
     Params:
       dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
@@ -204,7 +204,7 @@ class Sort(object):
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
       self.trackers.pop(t)
-    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks)
+    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks,iou_threshold)
 
     #update matched trackers with assigned detections
     for t,trk in enumerate(self.trackers):

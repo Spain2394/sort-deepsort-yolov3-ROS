@@ -55,7 +55,7 @@ def callback_image(data):
 	#TO DO: FIND BETTER AND MORE ACCURATE WAY TO SHOW BOUNDING BOXES!!
 	#Detection bounding box
 	cv2.rectangle(cv_rgb, (int(detections[0][0]), int(detections[0][1])), (int(detections[0][2]), int(detections[0][3])), (100, 255, 50), 1)
-	cv2.putText(cv_rgb , "person", (int(detections[0][0]), int(detections[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 255, 50), lineType=cv2.LINE_AA)
+	cv2.putText(cv_rgb , "plant", (int(detections[0][0]), int(detections[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 255, 50), lineType=cv2.LINE_AA)
 	
 	#Tracker bounding box
 	cv2.rectangle(cv_rgb, (track[0][0], track[0][1]), (track[0][2], track[0][3]), (255, 255, 255), 1)
@@ -72,21 +72,21 @@ def main():
     while not rospy.is_shutdown():
 	#Initialize ROS node
         rospy.init_node('sort_tracker', anonymous=False)
-	rate = rospy.Rate(10)
+		rate = rospy.Rate(10)
         # Get the parameters
-        (camera_topic, detection_topic, tracker_topic, cost_threshold, max_age, min_hits) = get_parameters()
-	tracker = sort.Sort(max_age=max_age, min_hits=min_hits) #create instance of the SORT tracker
-	cost_threshold = cost_threshold
-	#Subscribe to image topic
-	image_sub = rospy.Subscriber(camera_topic,Image,callback_image)
+    	(camera_topic, detection_topic, tracker_topic, cost_threshold, max_age, min_hits) = get_parameters()
+		tracker = sort.Sort(max_age=max_age, min_hits=min_hits) #create instance of the SORT tracker
+		cost_threshold = cost_threshold
+		#Subscribe to image topic
+		image_sub = rospy.Subscriber(camera_topic,Image,callback_image)
         #Subscribe to darknet_ros to get BoundingBoxes from YOLOv3
-	sub_detection = rospy.Subscriber(detection_topic, BoundingBoxes , callback_det)
-	#Publish results of object tracking
-	pub_trackers = rospy.Publisher(tracker_topic, IntList, queue_size=10)
-	#print(msg) #Testing msg that is published
-	#pub_trackers.publish(msg)
-	rate.sleep()
-	rospy.spin()
+		sub_detection = rospy.Subscriber(detection_topic, BoundingBoxes , callback_det)
+		#Publish results of object tracking
+		pub_trackers = rospy.Publisher(tracker_topic, IntList, queue_size=100)
+		#print(msg) #Testing msg that is published
+		#pub_trackers.publish(msg)
+		rate.sleep()
+		rospy.spin()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 #Camera topic here
-camera_topic: "/usb_cam/image_raw"
-queue_size: 1
+camera_topic: "/videofile/image_raw"
+queue_size: 10
 
 # Set your detection topic here
 detection_topic: "/darknet_ros/bounding_boxes"
@@ -12,10 +12,10 @@ tracker_topic: "/sort_track"
 cost_threhold: 15
 
 # min_hits
-min_hits: 1
+min_hits: 3
 
 # max age
-max_age: 5
+max_age: 1
 
 image_view:
 
