@@ -43,18 +43,4 @@ In line 90, modify model_filename to your directory
 To run:
 
     roslaunch sort_track sort_deep.launch
-IMPORTANT!! Before running the tracker nodes, you have to make the python scripts executable.
-For SORT, go to catkin_workspace/src/sort-deepsort-yolov3-ROS/sort_track/src and make track.py executable.
-For DEEP SORT, go to the same folder and make track_deep.py executable.
 
-## Disclaimer
-
-This project is using code from:
-
-[abewley/sort](https://github.com/abewley/sort): Simple, online, and realtime tracking of multiple objects in a video sequence.
-
-[nwojke/deep_sort](https://github.com/nwojke/deep_sort): Simple Online Realtime Tracking with a Deep Association Metric.
-
-[leggedrobotics/darknet_ros](https://github.com/leggedrobotics/darknet_ros): YOLO ROS: Real-Time Object Detection for ROS
-
-[AlexAB/darknet](https://github.com/AlexeyAB/darknet): YOLOv3 with modified darknet
