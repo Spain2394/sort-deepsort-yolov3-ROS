@@ -68,25 +68,26 @@ def callback_image(data):
 	global display 
 	global detections
 	global detection_event
+	global track
 	print("callback image")
 	#Display Image
-	if detection_event is False: return 
-	else:
-		bridge = CvBridge()
-		cv_rgb = bridge.imgmsg_to_cv2(data, "bgr8")
-		#TO DO: FIND BETTER AND MORE ACCURATE WAY TO SHOW BOUNDING BOXES!!
-		#Detection bounding box
-		cv2.rectangle(cv_rgb, (int(detections[0][0]), int(detections[0][1])), (int(detections[0][2]), int(detections[0][3])), (100, 255, 50), 1)
-		cv2.putText(cv_rgb , "plant", (int(detections[0][0]), int(detections[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 255, 50), lineType=cv2.LINE_AA)
-		
-		#Tracker bounding box
-		cv2.rectangle(cv_rgb, (track[0][0], track[0][1]), (track[0][2], track[0][3]), (255, 255, 255), 1)
-		# place id on upp
-		cv2.putText(cv_rgb , str(track[0][4]), (track[0][2], track[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), lineType=cv2.LINE_AA)
-		
-		if display:
-			cv2.imshow("yolov3-tracker", cv_rgb)
-			cv2.waitKey(1)
+	# if detection_event is False and len(track)!=0: return 
+	# else:
+	bridge = CvBridge()
+	cv_rgb = bridge.imgmsg_to_cv2(data, "bgr8")
+	#TO DO: FIND BETTER AND MORE ACCURATE WAY TO SHOW BOUNDING BOXES!!
+	#Detection bounding box
+	cv2.rectangle(cv_rgb, (int(detections[0][0]), int(detections[0][1])), (int(detections[0][2]), int(detections[0][3])), (100, 255, 50), 1)
+	cv2.putText(cv_rgb , "plant", (int(detections[0][0]), int(detections[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 255, 50), lineType=cv2.LINE_AA)
+	
+	#Tracker bounding box
+	cv2.rectangle(cv_rgb, (track[0][0], track[0][1]), (track[0][2], track[0][3]), (255, 255, 255), 1)
+	# place id on upp
+	cv2.putText(cv_rgb , str(track[0][4]), (track[0][2], track[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), lineType=cv2.LINE_AA)
+	
+	if display:
+		cv2.imshow("yolov3-tracker", cv_rgb)
+		cv2.waitKey(1)
 
 
 def main():
@@ -117,7 +118,7 @@ def main():
 		cost_threshold = cost_threshold
 
 		# loop twice per frame
-		rate = rospy.Rate(2 * fps)
+		rate = rospy.Rate(3)
 
 
 		tracker = sort.Sort(max_age=max_age, min_hits=min_hits) #create instance of the SORT tracker

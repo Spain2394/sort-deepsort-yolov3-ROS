@@ -15,7 +15,7 @@ cost_threhold: 15
 iou_threshold: 0.3
 
 # image display
-display: False
+display: True
 
 # min_hits
 min_hits: 3
