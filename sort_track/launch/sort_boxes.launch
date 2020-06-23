@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node name="sort_track" pkg="sort_track" type="track_boxes.py" output="screen">
+  <node name="sort_track" pkg="sort_track" type="bounding_boxes.py" output="screen">
     <rosparam command="load" file="$(find sort_track)/launch/sort_boxes.yaml"/>
   </node>
 </launch>

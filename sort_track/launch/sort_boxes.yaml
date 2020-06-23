@@ -1,12 +1,13 @@
 #Camera topic here
 camera_topic: "/videofile/image_raw"
-queue_size: 10
 
 # Set your detection topic here
 detection_topic: "/darknet_ros/bounding_boxes"
 
 # Set your output topic here
 tracker_topic: "/sort_track"
+
+object_topic: "darknet_ros/object_detector"
 
 # Threshold for Costs between detections and tracks
 cost_threhold: 15
@@ -24,7 +25,6 @@ min_hits: 3
 max_age: 1
 
 image_view:
-
   enable_opencv: true
   wait_key_delay: 1
   enable_console_output: true

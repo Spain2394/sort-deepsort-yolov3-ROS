@@ -113,6 +113,7 @@ catkin_package(
     std_msgs
     cv_bridge
     message_runtime
+    sensor_msgs
 
 #  DEPENDS system_lib
 )
