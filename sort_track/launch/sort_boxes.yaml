@@ -1,5 +1,5 @@
 #Camera topic here
-camera_topic: "/videofile/image_raw"
+camera_topic: "/video_stream/image_raw"
 
 # Set your detection topic here
 detection_topic: "/darknet_ros/bounding_boxes"
