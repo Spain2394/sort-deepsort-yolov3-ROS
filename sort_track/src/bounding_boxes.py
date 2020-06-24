@@ -225,7 +225,7 @@ def run():
             except CvBridgeError as e:
                 print(e)
 
-            # r.sleep()
+            r.sleep()
 
 
 if __name__ == '__main__':
