@@ -7,3 +7,4 @@ This node uses ```video_stream_opencv```
 
 ## TODO 
 Use small buffers to publish more precise bounding boxes
+
