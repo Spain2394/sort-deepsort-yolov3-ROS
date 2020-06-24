@@ -68,10 +68,22 @@ def detector_callback(bbox):
 def draw_detections(box, class_id, im):
     global marked_image
     marked_image = im
+    # print("drawing")
 
     cv2.rectangle(marked_image,(box[0],box[1]),(box[2], box[3]), (0,255,0),5)
     cv2.putText(marked_image, class_id, (box[0] - 10, box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
 
+def flush_buffer():
+    global _current_image_buffer
+    global _detected_bbox_buffer
+    global _cache_image_buffer
+    global _cache_detection_buffer
+
+    _current_image_buffer = []
+    _detected_bbox_buffer = []
+
+    _cache_image_buffer = []    
+    _cache_detection_buffer = []
 
 def run():
 
@@ -86,6 +98,11 @@ def run():
     global _frame_seq
     global _current_image_header_seq
     global _detected_image_header_seq
+    global _current_image_buffer
+    global _detected_bbox_buffer
+    global _cache_image_buffer
+    global _cache_detection_buffer
+
 
     _detected_image_header_seq = 0 
     _current_image_header_seq = -1
@@ -93,9 +110,11 @@ def run():
 
     # initilize current image and detected boxes
     _current_image_buffer = []
-    _detected_image_buffer = []
+    _detected_bbox_buffer = []
     _detected_image_header_seq_buffer = [] 
     _current_image_header_seq_buffer = []
+    _cache_image_buffer = []
+    _cache_detection_buffer = []
 
     marked_image = None
 
@@ -120,55 +139,93 @@ def run():
     # TODO publish marked image with sort detections
 
     rospy.loginfo("ready to detect")
+    # 10 frames / second
+    
 
-    r = rospy.Rate(2)
+    r = rospy.Rate(8)
     while not rospy.is_shutdown():
         boxes = []
         class_ids = []
         detections = 0
+        # _detected_bbox_buffer = []
+        # _current_image_buffer = []
             # only run if there is an image
         if _current_image is not None:
-            rospy.loginfo("current image seq: %s", _current_image_header_seq)
-            rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
-            if _current_image_header_seq == _detected_image_header_seq:
-                print("image seq are the same")
+            # rospy.loginfo("current image seq: %s", _current_image_header_seq)
+            # rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
+            # if _current_image_header_seq == _detected_image_header_seq:
+            #     print("image seq are the same")
+
 
             # rospy.loginfo("current image received")
             try:
-                # convert image from the subscriber into an OpenCV image
-                # initialize the detected image as the current frame
-                marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
-                # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results
-                
-                # marked_image, objects = self._detector.from_image(scene)  # detect objects
-                
-                # _imagepub.publish(_bridge.cv2_to_imgmsg(scene, 'rgb8'))  # publish detection results
+                # marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
+                _current_image_buffer.append(_current_image)
+                _detected_bbox_buffer.append(_detected_bbox)
+                # rospy.loginfo("current image seq: %s", _current_image_header_seq)
+                # rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
+                if len(_current_image_buffer) == 50: 
+                    # print("current buffer length is 10")
+                    for i in range(len(_current_image_buffer)):
+                        for d in range(len(_detected_bbox_buffer)):
+                            j =  _detected_bbox_buffer[d].image_header.seq
+                            k = _current_image_buffer[i].header.seq
+                            if j == k:
+                                _cache_image_buffer.append(_current_image_buffer[i])
+                                _cache_detection_buffer.append(_detected_bbox_buffer[d])
+                                print("Goal")
+                                # rospy.loginfo("current image seq: %s", k)
+                                # rospy.loginfo("current detection seq: %s", j)
+                            # if _detected_bbox_buffer[d].image_header.seq == _current_image_buffer[d].header.seq:
+                            #     print("detection frame: ", _detected_bbox_buffer[d].image_header.seq)
+                            #     print("image frame: ", _current_image_buffer[i].header.seq)
+                    for ic,dc in zip(_cache_image_buffer,_cache_detection_buffer):
+                        marked_image = _bridge.imgmsg_to_cv2(ic, 'rgb8')
+                        if dc is not None:
+                            for box in dc.bounding_boxes: 
+                                print(dc.image_header.seq)
+                                if box.Class == "plant":
+                                    # tbox.append([box.xmin,box.ymin,box.xmax,box.ymax])
+                                    # marked_image = _bridge.imgmsg_to_cv2(ic, 'rgb8')
+                                    draw_detections([box.xmin,box.ymin,box.xmax,box.ymax], box.Class, marked_image)
+                            _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # p
 
-                # what if there is no bounding boxes? 
-                # go through all the detections in each frame
-                if _detected_bbox is not None:
-                    for box in _detected_bbox.bounding_boxes:
-                        xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
-                        obj_class = box.Class
-
-                        # rospy.loginfo(' ' + str(obj_class)+ ' at ' + str(dets))
-        
-                        # rospy.loginfo(obj_class == "plant")
-                        if obj_class == "plant": 
-                            boxes.append([xmin, ymin, xmax, ymax])
-                            class_ids.append(obj_class)
-                            detections += 1
-                        else: pass  # no plants in the image
-                        # rospy.loginfo("object is a plant, pass bounding box to sort algorithm")
+                    flush_buffer()
+                else: pass
+            #     # convert image from the subscriber into an OpenCV image
+            #     # initialize the detected image as the current frame
             
-                for i in range(detections):
-                    draw_detections(boxes[i], class_ids[i], marked_image)
-                # publish after each image
-                _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
+            #     # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results
+                
+            #     # marked_image, objects = self._detector.from_image(scene)  # detect objects
+                
+            #     # _imagepub.publish(_bridge.cv2_to_imgmsg(scene, 'rgb8'))  # publish detection results
+
+            #     # what if there is no bounding boxes? 
+            #     # go through all the detections in each frame
+            #     if _detected_bbox is not None:
+            #         for box in _detected_bbox.bounding_boxes:
+            #             xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
+            #             obj_class = box.Class
+
+            #             # rospy.loginfo(' ' + str(obj_class)+ ' at ' + str(dets))
+        
+            #             # rospy.loginfo(obj_class == "plant")
+            #             if obj_class == "plant": 
+            #                 boxes.append([xmin, ymin, xmax, ymax])
+            #                 class_ids.append(obj_class)
+            #                 detections += 1
+            #             else: pass  # no plants in the image
+            #             # rospy.loginfo("object is a plant, pass bounding box to sort algorithm")
+            
+            #     for i in range(detections):
+            #         draw_detections(boxes[i], class_ids[i], marked_image)
+            #     # publish after each image
+                # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
             except CvBridgeError as e:
                 print(e)
 
-            r.sleep()
+            # r.sleep()
 
 
 if __name__ == '__main__':
