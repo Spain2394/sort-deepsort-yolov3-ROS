@@ -17,6 +17,7 @@ import cv2
 
 from sort import sort
 from sort_track.msg import IntList
+import time
 
 # def actionclient():
 #     client = actionlib.SimpleActionClient('darknet_ros/camera_reading', CheckForObjectsAction, darknet_ros_msgs.msg.CheckForObjectsAction)
@@ -65,12 +66,22 @@ def detector_callback(bbox):
     _detected_bbox = bbox
     _detected_image_header_seq = bbox.image_header.seq
 
-def draw_detections(box, class_id, im):
+def draw_detections(box, obj_class, tracker_id, im):
+
+    # draw according to the class id
+    # colours = np.random.rand(32, 2) 
+    # color = list(np.random.random(size=3) * 256)
+    
+    # print("Drawing boxes...")
+    # print(box)
+    rospy.loginfo("tracker ID: %s", tracker_id)
+
     global marked_image
     marked_image = im
-
-    cv2.rectangle(marked_image,(box[0],box[1]),(box[2], box[3]), (0,255,0),5)
-    cv2.putText(marked_image, class_id, (box[0] - 10, box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
+    xmin,ymin,xmax,ymax = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+    
+    cv2.rectangle(marked_image, (xmin,ymin), (xmax, ymax), (0,255,0), 4)
+    cv2.putText(marked_image, str(obj_class) + " " + str(int(tracker_id)), (xmin - 10, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
 
 
 def run():
@@ -86,6 +97,9 @@ def run():
     global _frame_seq
     global _current_image_header_seq
     global _detected_image_header_seq
+    global tracker
+    global trackers # contains tracker id, x1, y1, x2, y2, probabilitiy
+    trackers = [] # this is going to hold the state estimates of all of the trackers.
 
     _detected_image_header_seq = 0 
     _current_image_header_seq = -1
@@ -109,35 +123,53 @@ def run():
     # image and point cloud subscribers
     image_topic, detection_topic, display = getParam()
 
-    # and variables that will hold their values
-    rospy.Subscriber(image_topic, Image, image_callback, queue_size=10)
 
+    # subscribe to raw image feed
+    rospy.Subscriber(image_topic, Image, image_callback, queue_size=100)
+
+    # subscribe to detections
     rospy.Subscriber(detection_topic, BoundingBoxes, detector_callback, queue_size=10)
 
-    # publisher for frames with detected objects
+    # publish image topic with bounding boxes 
     _imagepub = rospy.Publisher('~labeled_image', Image, queue_size=10)
+
+    # TODO publish original unmarked frame
+    # _imagepub = rospy.Publisher('~original_frames', Image, queue_size=10)
 
     # TODO publish marked image with sort detections
 
     rospy.loginfo("ready to detect")
+
+    # adjust frame rate 
+
     
-    # Loop rate is 10 Hz this should be close to camera parameters
-    r = rospy.Rate(10)
+
+    r = rospy.Rate(5)
+    tracker = sort.Sort(max_age=10, min_hits=0) #create instance of the SORT tracker
     while not rospy.is_shutdown():
+        
         boxes = []
         class_ids = []
         detections = 0
+        dets = []
+    
+        # in the form: dets.append([x_min, y_min, x_max, y_max, probability])
+        # dets = np.empty((0,5))
             # only run if there is an image
         if _current_image is not None:
-            rospy.loginfo("current image seq: %s", _current_image_header_seq)
-            rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
-            if _current_image_header_seq == _detected_image_header_seq:
-                print("image seq are the same")
-
-            # rospy.loginfo("current image received")
+            
+            # rospy.loginfo("current image seq: %s", _current_image_header_seq)
+            # rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
+            # check to see if curr detection is on the current frame
+            # if _current_image_header_seq == _detected_image_header_seq:
+                # print("image seq are the same")
+            
             try:
+                # image received
                 # convert image from the subscriber into an OpenCV image
                 # initialize the detected image as the current frame
+                # initialize our current frame 
+                marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
                 # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results
                 
                 # marked_image, objects = self._detector.from_image(scene)  # detect objects
@@ -147,31 +179,53 @@ def run():
                 # what if there is no bounding boxes? 
                 # go through all the detections in each frame
                 if _detected_bbox is not None:
-
-                    marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
-
                     for box in _detected_bbox.bounding_boxes:
-                        xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
+                        # xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
                         obj_class = box.Class
-
-                        # rospy.loginfo(' ' + str(obj_class)+ ' at ' + str(dets))
-        
-                        # rospy.loginfo(obj_class == "plant")
-                        if obj_class == "plant": 
-                            boxes.append([xmin, ymin, xmax, ymax])
-                            class_ids.append(obj_class)
-                            detections += 1
+                        # update the trackers one at a time based on detection boxes ? 
+                        # collect all boxes from the relevant class
+                        if box.Class == "plant": 
+                            # rospy.loginfo("cycle_time %s", cycle_time)
+                            # [x1,y1,x2,y2] - for each object
+                            # store the class ids 
+                            dets.append([box.xmin, box.ymin, box.xmax, box.ymax, box.probability])
+                            # class_ids.append(obj_class)
+                            # detections +=
                         else: pass  # no plants in the image
-                        # rospy.loginfo("object is a plant, pass bounding box to sort algorithm")
 
-                    for i in range(detections):
-                        draw_detections(boxes[i], class_ids[i], marked_image)
-                # publish after each image
-                    _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
+                    
+                    # there are no detections, you still need to update you trackers
+                dets = np.array(dets) # convert for the n dimensional array
+                # whether or not the detections are none, the trackers still need to be updated
+                # if len(dets) == 0:
+                #     rospy.loginfo("no targets detected!")
+                #     # trackers = tracker.update(dets)
+                # else: 
+                #     rospy.loginfo("targets detected")
+                    # trackers = tracker.update(dets)
+                # rospy.loginfo("trackers updated based on current detections")
+                trackers = tracker.update(dets)
+                print(trackers)
+            
+                # iterate through all the trackers
+                for t in trackers:
+                    # rospy.loginfo("tracker ID: %s", d[4])
+                    # rospy.loginfo("tracker id: " + str(t[4]) + ": " + "info: " + str(t))
+                    # _tracker_ids.append(str(t[4]))
+                    box_t = [t[0], t[1], t[2], t[3]]
+
+                    
+                    # draw every tracker 
+                    # draw_detections(box, obj_class, tracker_id, im):
+                    draw_detections(box_t, obj_class, t[4], marked_image)
+
+                # the default case is the current frame with no writting
+                _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
+
             except CvBridgeError as e:
                 print(e)
 
-            r.sleep()
+            r.sleep() # best effort to maintain loop rate r for each frame
 
 
 if __name__ == '__main__':
