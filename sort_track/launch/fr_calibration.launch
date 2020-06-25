@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="sort_track" pkg="sort_track" type="fr_calibration.py" output="screen">
+    <remap from="/video_stream/image_raw" to="/videofile/image_raw" />
+    <rosparam command="load" file="$(find sort_track)/launch/sort_boxes.yaml"/>
+  </node>
+</launch>

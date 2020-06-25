@@ -115,7 +115,7 @@ def run():
     rospy.Subscriber(detection_topic, BoundingBoxes, detector_callback, queue_size=10)
 
     # publisher for frames with detected objects
-    _imagepub = rospy.Publisher('~labeled_image', Image, queue_size=10)
+    # _imagepub = rospy.Publisher('~labeled_image', Image, queue_size=10)
 
     # TODO publish marked image with sort detections
 
@@ -124,6 +124,7 @@ def run():
     # Loop rate is 10 Hz this should be close to camera parameters
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
+        # rospy.wait_for_message(detection_topic, BoundingBoxes)
         boxes = []
         class_ids = []
         detections = 0
@@ -133,45 +134,45 @@ def run():
             rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
             if _current_image_header_seq == _detected_image_header_seq:
                 print("image seq are the same")
-
+        
             # rospy.loginfo("current image received")
             try:
                 # convert image from the subscriber into an OpenCV image
                 # initialize the detected image as the current frame
                 # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results
-                
+                marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
                 # marked_image, objects = self._detector.from_image(scene)  # detect objects
                 
                 # _imagepub.publish(_bridge.cv2_to_imgmsg(scene, 'rgb8'))  # publish detection results
 
                 # what if there is no bounding boxes? 
                 # go through all the detections in each frame
-                if _detected_bbox is not None:
+                # if _detected_bbox is not None:
 
-                    marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
+                #     marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
 
-                    for box in _detected_bbox.bounding_boxes:
-                        xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
-                        obj_class = box.Class
+                #     for box in _detected_bbox.bounding_boxes:
+                #         xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
+                #         obj_class = box.Class
 
-                        # rospy.loginfo(' ' + str(obj_class)+ ' at ' + str(dets))
+                #         # rospy.loginfo(' ' + str(obj_class)+ ' at ' + str(dets))
         
-                        # rospy.loginfo(obj_class == "plant")
-                        if obj_class == "plant": 
-                            boxes.append([xmin, ymin, xmax, ymax])
-                            class_ids.append(obj_class)
-                            detections += 1
-                        else: pass  # no plants in the image
-                        # rospy.loginfo("object is a plant, pass bounding box to sort algorithm")
+                #         # rospy.loginfo(obj_class == "plant")
+                #         if obj_class == "plant": 
+                #             boxes.append([xmin, ymin, xmax, ymax])
+                #             class_ids.append(obj_class)
+                #             detections += 1
+                #         else: pass  # no plants in the image
+                #         # rospy.loginfo("object is a plant, pass bounding box to sort algorithm")
 
-                    for i in range(detections):
-                        draw_detections(boxes[i], class_ids[i], marked_image)
-                # publish after each image
-                    _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
+                #     for i in range(detections):
+                #         draw_detections(boxes[i], class_ids[i], marked_image)
+                # # publish after each image
+                #     _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
             except CvBridgeError as e:
                 print(e)
 
-            r.sleep()
+            # r.sleep()
 
 
 if __name__ == '__main__':
