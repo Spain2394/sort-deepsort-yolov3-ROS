@@ -145,9 +145,15 @@ def run():
 
     
 
-    r = rospy.Rate(10)
-    tracker = sort.Sort(max_age = 5, min_hits=0) #create instance of the SORT tracker
+    r = rospy.Rate(8)
+    # max age is the maximum number of frames a tracker can exist by making max_age > 1 
+    # you can allow it to survive without a detection, for instance if there are skip frames 
+    # in this there is an expected number of skip frames, by making max_age = n, you are allowing
+    # for n skip frames. 
+    # min hits is the minimum number of times a tracker must be detected to survive
+    tracker = sort.Sort(max_age = 3, min_hits=1) #create instance of the SORT tracker
     counter = 0 
+    frames = 1 
     while not rospy.is_shutdown():
         
         boxes = []
@@ -161,7 +167,11 @@ def run():
         if _current_image is not None:
             
             # rospy.loginfo("current image seq: %s", _current_image_header_seq)
-            # rospy.loginfo("current detection seq: %s", _detected_image_header_seq)
+            print("frames processed %s: " %frames)
+            rospy.loginfo("detected frame number: %s" % _detected_image_header_seq)
+            # if frame < 3 : 
+            #     rospy.spin()
+            
             # check to see if curr detection is on the current frame
             # if _current_image_header_seq == _detected_image_header_seq:
                 # print("image seq are the same")
@@ -181,6 +191,7 @@ def run():
                 # what if there is no bounding boxes? 
                 # go through all the detections in each frame
                 if _detected_bbox is not None:
+                    frames +=1
                     for box in _detected_bbox.bounding_boxes:
                         # xmin, ymin, xmax, ymax = box.xmin, box.ymin, box.xmax, box.ymax
                         obj_class = box.Class
