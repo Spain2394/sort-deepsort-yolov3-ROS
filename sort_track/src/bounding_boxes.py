@@ -74,7 +74,7 @@ def draw_detections(box, obj_class, tracker_id, im):
     
     # print("Drawing boxes...")
     # print(box)
-    rospy.loginfo("tracker ID: %s", tracker_id)
+    # rospy.loginfo("tracker ID: %s", tracker_id)
 
     global marked_image
     marked_image = im
@@ -100,6 +100,7 @@ def run():
     global tracker
     global trackers # contains tracker id, x1, y1, x2, y2, probabilitiy
     trackers = [] # this is going to hold the state estimates of all of the trackers.
+    tracker_ids = []
 
     _detected_image_header_seq = 0 
     _current_image_header_seq = -1
@@ -144,8 +145,9 @@ def run():
 
     
 
-    r = rospy.Rate(5)
-    tracker = sort.Sort() #create instance of the SORT tracker
+    r = rospy.Rate(10)
+    tracker = sort.Sort(max_age = 5, min_hits=0) #create instance of the SORT tracker
+    counter = 0 
     while not rospy.is_shutdown():
         
         boxes = []
@@ -205,20 +207,27 @@ def run():
                     # trackers = tracker.update(dets)
                 # rospy.loginfo("trackers updated based on current detections")
                 trackers = tracker.update(dets)
-                print(trackers)
+                # print(trackers)
             
                 # iterate through all the trackers
                 for t in trackers:
                     # rospy.loginfo("tracker ID: %s", d[4])
                     # rospy.loginfo("tracker id: " + str(t[4]) + ": " + "info: " + str(t))
                     # _tracker_ids.append(str(t[4]))
-                    box_t = [t[0], t[1], t[2], t[3]]
+                    str_n = str(int(t[4]))
+                    if (str_n in tracker_ids) == False:
+                        print("unique id found")
+                        # unique id 
+                        tracker_ids.append(str_n)
+                        counter +=1
+                    else: pass
 
-                    
+                    box_t = [t[0], t[1], t[2], t[3]]
                     # draw every tracker 
                     # draw_detections(box, obj_class, tracker_id, im):
                     draw_detections(box_t, obj_class, t[4], marked_image)
-
+                
+                print("plant count:%s"%str(counter))
                 # the default case is the current frame with no writting
                 _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
 
