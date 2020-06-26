@@ -9,6 +9,9 @@ tracker_topic: "/sort_track"
 
 object_topic: "darknet_ros/object_detector"
 
+# write frames to
+filepath: "/home/nvidia/catkin_ws/src/sort-deepsort-yolov3-ROS/tracked_frames"
+
 # Threshold for Costs between detections and tracks
 cost_threhold: 15
 
