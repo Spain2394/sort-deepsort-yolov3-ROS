@@ -145,13 +145,13 @@ def run():
 
     
 
-    r = rospy.Rate(8)
+    r = rospy.Rate(4)
     # max age is the maximum number of frames a tracker can exist by making max_age > 1 
     # you can allow it to survive without a detection, for instance if there are skip frames 
     # in this there is an expected number of skip frames, by making max_age = n, you are allowing
     # for n skip frames. 
     # min hits is the minimum number of times a tracker must be detected to survive
-    tracker = sort.Sort(max_age = 3, min_hits=1) #create instance of the SORT tracker
+    tracker = sort.Sort(max_age = 10, min_hits=3) #create instance of the SORT tracker
     counter = 0 
     frames = 1 
     while not rospy.is_shutdown():
