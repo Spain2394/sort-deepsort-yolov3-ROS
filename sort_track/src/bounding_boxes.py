@@ -4,7 +4,8 @@
 import rospy
 import numpy as np
 import actionlib
-
+import sys, os
+import subprocess
 # import tf
 #include <darknet_ros_msgs/CheckForObjectsAction.h>
 # from darknet_ros_msgs.msg import CheckForObjectsAction
@@ -18,6 +19,7 @@ import cv2
 from sort import sort
 from sort_track.msg import IntList
 import time
+# import darknet
 
 # def actionclient():
 #     client = actionlib.SimpleActionClient('darknet_ros/camera_reading', CheckForObjectsAction, darknet_ros_msgs.msg.CheckForObjectsAction)
@@ -74,7 +76,12 @@ def draw_boxes(bbox, box_name, tracker_id, im):
     xmin, ymin, xmax, ymax = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
     
     cv2.rectangle(marked_image, (xmin,ymin), (xmax, ymax), (0,255,0), 4)
-    cv2.putText(marked_image, str(box_name) + " " + str(int(tracker_id)), (xmin - 10, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
+    cv2.putText(marked_image,
+                     str(box_name) +
+                    " [" + str(tracker_id) + "]",
+                    (xmin, ymax - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                    [0, 255, 0], 2)
+    # cv2.putText(marked_image, str(box_name) + " " + str(int(tracker_id)), (xmin - 10, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
     return marked_image
 
 
@@ -120,7 +127,13 @@ def get_detections(detections):
 def write(all_trackers, current_image_buffer, filepath):
     global _bridge
     global _track_class
-    frames = 0
+    global frames
+    # frames = 0
+
+
+    # subprocess.call(['echo hello'])
+    if frames == 1: 
+        os.system('rm -rf /home/nvidia/catkin_ws/src/sort-deepsort-yolov3-ROS/tracked_frames/*.jpg')
     # 1,2,3,4
     for im in current_image_buffer:
         # 45, 2, 3, for all trackers in a frame
@@ -161,6 +174,7 @@ def run():
     global _bridge
     global _detected_bbox
     global _track_class
+    global frames
     # global coordinates
     # global object_class
     # global dets
@@ -224,17 +238,19 @@ def run():
     rospy.Subscriber(detection_topic, BoundingBoxes, detector_callback, queue_size=1)
     rospy.Subscriber(image_topic, Image, image_callback, queue_size=1)
 
-    tracker = sort.Sort(max_age = 5, min_hits=1) # create instance of the SORT tracker
+    tracker = sort.Sort(max_age = 4, min_hits=1) # create instance of the SORT tracker
     _detected_bbox = rospy.wait_for_message(detection_topic, BoundingBoxes)
-    # _old_detection = _detected_bbox.image_header.seq
+    _old_detection = _detected_bbox.image_header.seq
 
-    r = rospy.Rate(6)
+    r = rospy.Rate(7)
     while not rospy.is_shutdown():
         # tracker = sort.Sort(max_age = 10, min_hits=1) #create instance of the SORT tracker
         # old_detection = _detected_bbox.image_header.seq
         # rospy.wait_for_message(detection_topic, BoundingBoxes) 
         # if new_detection(old_detection):
+        # rospy.loginfo("waiting for new detection")
         if new_detection(_detected_bbox) and _current_image is not None:
+            # rospy.loginfo("received new detection")
             dets = get_detections(_detected_bbox)
             # # [box.xmin, box.ymin, box.xmax, box.ymax, box.probability, frame seq]
             trackers = tracker.update(np.array(dets)) # exclude the frame seq
@@ -244,10 +260,12 @@ def run():
             print("current image", _current_image.header.seq)
             cache(_detected_bbox, _current_image, np.append(trackers, [[_detected_bbox.image_header.seq]*5],0))
             print("lenghth of current buffer", len(_current_image_buffer))
-            if len(_current_image_buffer) > 18:
+            if len(_current_image_buffer) > 10:
                 write(_all_trackers, _current_image_buffer, filepath) 
+                tracker = sort.Sort(max_age=4, min_hits=1)
                 flush_cache()
-                return
+                
+                # return
                 # tracker = sort.Sort(max_age = 10, min_hits=1) #create instance of the SORT tracker
 
                 # tracker = sort.Sort(max_age = 10, min_hits=1) #create instance of the SORT tracker
