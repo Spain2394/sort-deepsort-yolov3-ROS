@@ -18,6 +18,7 @@ import cv2
 from sort import sort
 from sort_track.msg import IntList
 import time
+# from visualize_seedling import * 
 
 # def actionclient():
 #     client = actionlib.SimpleActionClient('darknet_ros/camera_reading', CheckForObjectsAction, darknet_ros_msgs.msg.CheckForObjectsAction)
@@ -48,6 +49,16 @@ def image_callback(image):
 
     _current_image = image
     _current_image_header_seq = image.header.seq
+
+def detected_image_callback(image):
+    """Image callback"""
+    # Store value on a private attribute
+    global _current_detected_image
+    global _current_detected_image_seq
+    # global _current_image_header_seq
+
+    _current_detected_image =  image
+    _current_detected_image_seq = image.header.seq
     
 
 # def object_callback(object):
@@ -78,15 +89,47 @@ def draw_detections(box, obj_class, tracker_id, im):
 
     global marked_image
     marked_image = im
+
+    thickness = 4
+    font_scale = 1
+    box_color = (255,0,0)
+    text_color = (0,0,0)
+    global count 
+
     xmin,ymin,xmax,ymax = int(box[0]), int(box[1]), int(box[2]), int(box[3])
     
-    cv2.rectangle(marked_image, (xmin,ymin), (xmax, ymax), (0,255,0), 4)
-    cv2.putText(marked_image, str(obj_class) + " " + str(int(tracker_id)), (xmin - 10, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
+    cv2.rectangle(marked_image, (xmin,ymin), (xmax, ymax), color=box_color, thickness=thickness)
+    # txt = f"{obj_class}: {tracker_id:.2f}"
+    txt = str(obj_class) + " : " + str(tracker_id)
+    (text_width, text_height) = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
 
+    text_offset_x = xmin
+    text_offset_y = ymin - 5
+    box_coords = ((text_offset_x, text_offset_y), (text_offset_x + text_width, text_offset_y - text_height))
+    overlay = marked_image.copy()
+    # x_center = xmin,  
+    
+    cv2.rectangle(overlay, box_coords[0], box_coords[1], color=box_color, thickness=cv2.FILLED)
+
+    marked_image = cv2.addWeighted(overlay, 0.6, marked_image, 0.4, 0)
+    cv2.putText(marked_image, txt, (xmin - 5, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=text_color, thickness=thickness)
+    cv2.putText(marked_image, count, (xmax - 5, ymax - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(255,255,255), thickness=thickness)
+    # cv2.putText(marked_image, txt, (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=text_color, thickness=thickness)
+
+
+
+def new_detection(detection):
+    global _old_detection
+    # print("detection image seq", detection.image_header.seq)
+    # print("old detection", _old_detection)
+    if detection == None and _old_detection == None: return False
+    elif detection is None: return False
+    else: return _old_detection != detection.image_header.seq
 
 def run():
 
     # declare global variables that can be updated globally
+    global counter 
     global _current_image
     global _bridge
     global _detected_bbox
@@ -97,14 +140,20 @@ def run():
     global _frame_seq
     global _current_image_header_seq
     global _detected_image_header_seq
+    global _current_detected_image
     global tracker
     global trackers # contains tracker id, x1, y1, x2, y2, probabilitiy
+    global _old_detection
+    global _current_detected_image_seq
     trackers = [] # this is going to hold the state estimates of all of the trackers.
     tracker_ids = []
 
+    _old_detection = None
+    _current_detected_image_seq = -1
     _detected_image_header_seq = 0 
     _current_image_header_seq = -1
     temp_detected_image = -2
+    counter = 0
 
     # initilize current image and detected boxes
     _current_image_buffer = []
@@ -115,6 +164,7 @@ def run():
     marked_image = None
 
     _current_image = None
+    _current_detected_image = None
     # _detected_bbox_buffer = []
     _detected_bbox = None
 
@@ -126,13 +176,17 @@ def run():
 
 
     # subscribe to raw image feed
-    rospy.Subscriber(image_topic, Image, image_callback, queue_size=100)
+    # rospy.Subscriber(image_topic, Image, image_callback, queue_size=100)
 
     # subscribe to detections
-    rospy.Subscriber(detection_topic, BoundingBoxes, detector_callback, queue_size=10)
+    rospy.Subscriber(detection_topic, BoundingBoxes, detector_callback, queue_size=1)
+
+    rospy.Subscriber("/darknet_ros/detection_image", Image, detected_image_callback, queue_size=1)
+
+    
 
     # publish image topic with bounding boxes 
-    _imagepub = rospy.Publisher('~labeled_image', Image, queue_size=10)
+    _imagepub = rospy.Publisher('~labeled_image', Image, queue_size=1)
 
     # TODO publish original unmarked frame
     # _imagepub = rospy.Publisher('~original_frames', Image, queue_size=10)
@@ -145,30 +199,44 @@ def run():
 
     
 
-    r = rospy.Rate(4)
+    r = rospy.Rate(6)
     # max age is the maximum number of frames a tracker can exist by making max_age > 1 
     # you can allow it to survive without a detection, for instance if there are skip frames 
     # in this there is an expected number of skip frames, by making max_age = n, you are allowing
     # for n skip frames. 
     # min hits is the minimum number of times a tracker must be detected to survive
-    tracker = sort.Sort(max_age = 10, min_hits=3) #create instance of the SORT tracker
-    counter = 0 
+    
+    tracker = sort.Sort(max_age = 8, min_hits=1) #create instance of the SORT tracker
+    # counter = 0 
     frames = 1 
+
+    _old_detection = rospy.wait_for_message(detection_topic, BoundingBoxes).image_header.seq
+    # rospy.wait_for_message("/darknet_ros/detection_image", Image)
     while not rospy.is_shutdown():
+        # _old_detection = _detected_bbox.image_header.seq
+        # rospy.wait_for_message("/darknet_ros/detection_image", Image)
         
         boxes = []
         class_ids = []
         detections = 0
         dets = []
-    
+        # if frames == 1: 
+        #     _old_detection = _detected_bbox.seq
+
+        # if frames == 1: 
+        #     _old_detection = _detected_bbox
+
         # in the form: dets.append([x_min, y_min, x_max, y_max, probability])
         # dets = np.empty((0,5))
             # only run if there is an image
-        if _current_image is not None:
+        if  new_detection(_detected_bbox) and _current_detected_image is not None:
+
+            # if frames == 1: 
+            #     _old_detection = _detected_bbox.image_header.seq
             
-            # rospy.loginfo("current image seq: %s", _current_image_header_seq)
-            print("frames processed %s: " %frames)
-            rospy.loginfo("detected frame number: %s" % _detected_image_header_seq)
+            print("current image seq: %s", _current_detected_image_seq)
+            # print("frames processed %s: " %frames)
+            print("detected frame number: %s" % _detected_image_header_seq)
             # if frame < 3 : 
             #     rospy.spin()
             
@@ -181,7 +249,11 @@ def run():
                 # convert image from the subscriber into an OpenCV image
                 # initialize the detected image as the current frame
                 # initialize our current frame 
-                marked_image = _bridge.imgmsg_to_cv2(_current_image, 'rgb8')
+                # marked_image = _bridge.imgmsg_to_cv2(_current_image, 
+                # 'rgb8')
+
+                marked_image = _bridge.imgmsg_to_cv2(_current_detected_image, 
+                'rgb8')
                 # _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results
                 
                 # marked_image, objects = self._detector.from_image(scene)  # detect objects
@@ -227,7 +299,7 @@ def run():
                     # _tracker_ids.append(str(t[4]))
                     str_n = str(int(t[4]))
                     if (str_n in tracker_ids) == False:
-                        print("unique id found")
+                        # print("unique id found")
                         # unique id 
                         tracker_ids.append(str_n)
                         counter +=1
@@ -236,11 +308,14 @@ def run():
                     box_t = [t[0], t[1], t[2], t[3]]
                     # draw every tracker 
                     # draw_detections(box, obj_class, tracker_id, im):
-                    draw_detections(box_t, obj_class, t[4], marked_image)
+                    # draw_detections(box_t, obj_class, t[4], marked_image)
+                    # draw_detections(marked_image, t[4], box_t)
+                    draw_detections(box_t, "plant", t[4], marked_image)
                 
                 print("plant count:%s"%str(counter))
                 # the default case is the current frame with no writting
                 _imagepub.publish(_bridge.cv2_to_imgmsg(marked_image, 'rgb8'))  # publish detection results                    
+                _old_detection = _detected_bbox.image_header.seq
 
             except CvBridgeError as e:
                 print(e)

@@ -17,6 +17,7 @@ from sensor_msgs.msg import Image
 import time
 from sort_track.msg import IntList
 import math
+import visualize_seedling
 
 def get_parameters():
 	"""
