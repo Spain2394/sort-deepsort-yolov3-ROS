@@ -1,0 +1,61 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/biosensing/spai_ws/devel/include/**",
+        "/home/biosensing/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/biosensing/catkin_ws/src/a3_p2/include/**",
+        "/home/biosensing/catkin_ws/src/ros_astra_camera/include/**",
+        "/home/biosensing/catkin_ws/src/object_dection/basic_threshold/include/**",
+        "/home/biosensing/catkin_ws/src/biosenserover/include/**",
+        "/home/biosensing/catkin_ws/src/cobra/include/**",
+        "/home/biosensing/spai_ws/src/darknet_ros/darknet_ros/include/**",
+        "/home/biosensing/catkin_ws/src/realsense/ddynamic_reconfigure/include/**",
+        "/home/biosensing/catkin_ws/src/object_dection/detect_object/include/**",
+        "/home/biosensing/spai_ws/src/LT2_Workspace/src/gps_common/include/**",
+        "/home/biosensing/catkin_ws/src/hello_world/include/**",
+        "/home/biosensing/catkin_ws/src/hokuyo_node-electric-devel/include/**",
+        "/home/biosensing/catkin_ws/src/imu_vn_100/include/**",
+        "/home/biosensing/spai_ws/src/LT2_Workspace/src/flowerbot/kangaroo_driver/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_auto_docking/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_bumper2pc/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_controller_tutorial/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki_desktop/kobuki_gazebo_plugins/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_keyop/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_node/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_random_walker/include/**",
+        "/home/biosensing/catkin_ws/src/kobuki/kobuki_safety_controller/include/**",
+        "/home/biosensing/catkin_ws/src/LMS1xx/include/**",
+        "/home/biosensing/spai_ws/src/LT2_Workspace/src/marvelmind_nav/ros_marvelmind_package/include/**",
+        "/home/biosensing/catkin_ws/src/mmp30/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/mmp30_control/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/mmp30_description/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/mmp30_gazebo/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/mmp30_navigation/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/mmp30_viz/include/**",
+        "/home/biosensing/catkin_ws/src/my_dynamixel/include/**",
+        "/home/biosensing/catkin_ws/src/object_dection/object_detector_core/include/**",
+        "/home/biosensing/catkin_ws/src/openslam_gmapping/include/**",
+        "/home/biosensing/catkin_ws/src/phantomx_arm/phantomx_arm_controller/include/**",
+        "/home/biosensing/catkin_ws/src/projectserver/include/**",
+        "/home/biosensing/catkin_ws/src/realsense/realsense2_camera/include/**",
+        "/home/biosensing/spai_ws/src/LT2_Workspace/src/flowerbot/robot_base/include/**",
+        "/home/biosensing/spai_ws/src/LT2_Workspace/src/flowerbot/robot_drive/include/**",
+        "/home/biosensing/catkin_ws/src/MMP30_Simulation/simple_navigation_goals/include/**",
+        "/home/biosensing/catkin_ws/src/object_dection/tensorflow_object_detector/include/**",
+        "/home/biosensing/catkin_ws/src/turtlebot2i/turtlebot2i_apps/turtlebot2i_zoning_demo/include/**",
+        "/home/biosensing/catkin_ws/src/velodyne/velodyne_driver/include/**",
+        "/home/biosensing/catkin_ws/src/velodyne_gazebo_plugins/include/**",
+        "/home/biosensing/catkin_ws/src/velodyne/velodyne_laserscan/include/**",
+        "/home/biosensing/catkin_ws/src/velodyne/velodyne_pointcloud/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ]
+}

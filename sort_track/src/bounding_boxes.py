@@ -94,7 +94,7 @@ def draw_detections(box, obj_class, tracker_id, im):
     font_scale = 1
     box_color = (255,0,0)
     text_color = (0,0,0)
-    global count 
+    global counter
 
     xmin,ymin,xmax,ymax = int(box[0]), int(box[1]), int(box[2]), int(box[3])
     
@@ -113,7 +113,7 @@ def draw_detections(box, obj_class, tracker_id, im):
 
     marked_image = cv2.addWeighted(overlay, 0.6, marked_image, 0.4, 0)
     cv2.putText(marked_image, txt, (xmin - 5, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=text_color, thickness=thickness)
-    cv2.putText(marked_image, count, (xmax - 5, ymax - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(255,255,255), thickness=thickness)
+    # cv2.putText(marked_image, counter, (xmax - 5, ymax - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(255,255,255), thickness=thickness)
     # cv2.putText(marked_image, txt, (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=text_color, thickness=thickness)
 
 
